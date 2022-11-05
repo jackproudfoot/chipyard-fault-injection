@@ -7,5 +7,8 @@ if __name__ == '__main__':
     
     alu = Module('alu', module_text)
 
-    print(alu.io)
+    alu.extract_wires()
+
+    for wire in alu.wires:
+        print(wire)
 
