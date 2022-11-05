@@ -1,11 +1,11 @@
 from mapping import Module
 
 if __name__ == '__main__':
-    mod = Module('test', 'test module')
+    
+    with open('alu.v', 'r') as module_f:
+        module_text = module_f.read()
+    
+    alu = Module('alu', module_text)
 
-    mod2 = Module('test2', 'test module 2', parents = [mod])
+    print(alu.io)
 
-    mod.add_children([mod2])
-
-    print(mod)
-    print(mod2)
