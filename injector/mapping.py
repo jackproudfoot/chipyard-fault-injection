@@ -1,11 +1,12 @@
 class Module:
 
-    def __init__(self, name, module_text, parents = [], children = []):
+    def __init__(self, name, module_text, parents = None, children = None):
         self.name = name
         self.module_text = module_text
         self.io = dict()
-        self._parents = parents
-        self._children = children
+
+        self._parents = parents or []
+        self._children = children or []
 
         if module_text == '':
             print('Cannot initialize module ({}) without module text.'.format(name))
