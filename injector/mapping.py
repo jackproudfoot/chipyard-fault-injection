@@ -28,6 +28,7 @@ class Module:
     def add_children(self, children):
         self._children += children
 
+
     def _parse_io(self):
         # use regex to extract references to inputs and outputs
         inputs = re.findall(r'input\s+(?:\[\d+:\d+\])?\s*(\w+)', self.module_text)
