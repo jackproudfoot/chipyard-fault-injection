@@ -3,9 +3,12 @@ import re
 import sys
 from mapping import Module
 
+'''
+Create list of modules from some input file
+'''
 def parse_file(file_path):
     #file = open(file_path, 'r')
-    file = open(os.path.join(sys.path[0], file_path), 'r')
+    file = open(os.path.join(sys.path[0], file_path), 'r')      
     text = file.read()
     file.close()
 
@@ -19,6 +22,7 @@ def parse_file(file_path):
     # for m in all_modules:
     #     print(str(m))
     #     print("\n")
+    return all_modules
 
 if __name__ == '__main__':
     
