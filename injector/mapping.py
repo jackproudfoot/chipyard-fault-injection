@@ -1,3 +1,4 @@
+
 import re
 
 class Wire:
@@ -18,14 +19,6 @@ class Wire:
         return '{} {} {}'.format(self.type, self.name, '[{}:{}]'.format(self.bounds[0], self.bounds[1]) if self.bounds else '')
 
 class Module:
-
-    '''
-    Initialize new module instance
-    name            name of the module
-    module_text     full string of the module
-    parents         references to parent modules in the dependency graph
-    children        references to the child modules in the dependency graph
-    '''
     def __init__(self, name, module_text, parents = None, children = None):
         self.name = name
         self.module_text = module_text
