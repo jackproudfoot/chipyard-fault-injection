@@ -2,13 +2,16 @@
 import re
 
 class Module:
-    def __init__(self, name, module_text, parents = None, children = None):
-        self.name = name
+    #def __init__(self, name, module_text, parents = None, children = None):
+    def __init__(self, name, module_text):
+        self.type = name
         self.module_text = module_text
         self.io = dict()
 
-        self._parents = parents or []
-        self._children = children or []
+        # self._parents = parents or list()
+        # self._children = children or list()
+        self._parents = list()
+        self._children = list()
 
         if module_text == '':
             print('Cannot initialize module ({}) without module text.'.format(name))
@@ -20,13 +23,15 @@ class Module:
     Add list of references to parent modules
     '''
     def add_parents(self, parents):
-        self._parents += parents
+        #self._parents += parents
+        self._parents.extend(parents)
 
     '''
     Add list of references to children modules
     '''
     def add_children(self, children):
-        self._children += children
+        #self._children += children
+        self._children.extend(children)
 
 
     def _parse_io(self):
@@ -45,7 +50,7 @@ class Module:
     '''
     def __str__(self):
         return '== {} ==\n\tParents: {}\n\tChildren: {}'.format(
-            self.name, 
+            self.type, 
             [parent.name for parent in self._parents], 
             [child.name for child in self._children]
         )
