@@ -21,9 +21,9 @@ def parse_file(file_path):
         all_modules.append(new_module)
     
 
-    alu.extract_wires()
+    all_modules[0].extract_wires()
 
-    for wire in alu.wires:
+    for wire in all_modules[0].wires:
         print(wire)
 
     return all_modules

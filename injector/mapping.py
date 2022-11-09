@@ -56,13 +56,9 @@ class Module:
     def _parse_io(self):
         # use regex to extract references to inputs and outputs
         io = re.findall(r'((?:input)|(?:output))\s+(?:\[\d+:\d+\])?\s*(\w+)', self.module_text)
-        #/outputs = re.findall(r'output\s+(?:\[\d+:\d+\])?\s*(\w+)', self.module_text)
-
 
         for module_input in io:
             self.io[module_input[1]] = module_input[0]
-
-        print(self.io)
 
 
     '''
