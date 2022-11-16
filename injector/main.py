@@ -19,28 +19,13 @@ def parse_file(file_path):
 
     module_dict = dict()
     module_instance_dict = dict()
+
     for m_t in module_texts:
         new_module = Module(m_t[1], m_t[0])
         module_dict[new_module.type] = new_module
         module_instance_dict[new_module.type] = list()
     
     return module_dict, module_instance_dict
-
-
-# #def make_module_instances(all_modules):
-# def set_all_parent_children(all_modules):
-#     for parent_name in all_modules.keys():
-#         parent_module = all_modules[parent_name]
-#         possible_modules = re.findall(r'\\n\s+(\w+) (\w+) ?\(', repr(parent_module.module_text))       #gets (moduletype) (instance name)
-        
-#         for mod in possible_modules:
-#             if mod[0] in all_modules.keys():
-#                 child_module = all_modules[mod[0]]
-#                 parent_module.add_children([child_module])
-#                 child_module.add_parents([parent_module])
-#                 # new_module_instance = ModuleInstance(all_modules[mod[0]], mod[1])
-#                 # new_module_instance.add_parents()
-#     return
 
 '''
     Finds children of some given model instance. Sets up parent-child relationship and recursively operates on all child instances as well.
@@ -99,8 +84,7 @@ if __name__ == '__main__':
    
    
    
-   
-   #From below code + parents/children logic movded to Module instead of ModuleInstance, found that the top-level module is ChipTop (the only module with 0 parents)
+   #From below code + parents/children logic moved to Module instead of ModuleInstance, found that the top-level module is ChipTop (the only module with 0 parents)
 
     # set_all_parent_children(all_modules)
     # count = 0
@@ -110,4 +94,6 @@ if __name__ == '__main__':
     #         count += 1
     #         print(m.type + ": " + str(len(m._parents)) + " parents, " + str(len(m._children)) + " children")
     # print("num parentless modules = " + str(count))
+
+
 
