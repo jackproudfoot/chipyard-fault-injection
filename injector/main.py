@@ -23,12 +23,11 @@ def parse_file(file_path):
 
     all_modules[0].extract_wires()
 
-    for wire in all_modules[0].wires:
-        print(wire)
+    print(all_modules[0].inject_fault())
 
     return all_modules
 
 if __name__ == '__main__':    
-    parse_file('chipyard.TestHarness.SmallBoomConfig.top.v')        #should be 475 modules
+    parse_file('alu.v')        #should be 475 modules
 
 
