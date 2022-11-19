@@ -18,17 +18,17 @@ class Wire:
         return '{} {} {}'.format(self.type, self.name, '[{}:{}]'.format(self.bounds[0], self.bounds[1]) if self.bounds else '')
 
 class Module:
-    def __init__(self, name, module_text, parents = None, children = None):
-        self.name = name
+    #def __init__(self, name, module_text, parents = None, children = None):
+    def __init__(self, type, module_text):
+        self.type = type
         self.module_text = module_text
-        self.io = dict()
 
-        self._parents = parents or []
-        self._children = children or []
+        self.io = dict()     
         self.wires = []
 
+
         if module_text == '':
-            print('Cannot initialize module ({}) without module text.'.format(name))
+            print('Cannot initialize module ({}) without module text.'.format(type))
             exit(1)
 
         self._parse_io()
@@ -39,19 +39,6 @@ class Module:
         for wire in wires:
             self.wires.append(Wire(wire[0], wire[1], wire[2], wire[3]))
 
-        # todo need to include outputs here...
-
-    '''
-    Add list of references to parent modules
-    '''
-    def add_parents(self, parents):
-        self._parents += parents
-
-    '''
-    Add list of references to children modules
-    '''
-    def add_children(self, children):
-        self._children += children
 
 
     '''
@@ -84,8 +71,4 @@ class Module:
     String representation for the module class
     '''
     def __str__(self):
-        return '== {} ==\n\tParents: {}\n\tChildren: {}'.format(
-            self.name, 
-            [parent.name for parent in self._parents], 
-            [child.name for child in self._children]
-        )
+        return self.type
