@@ -37,3 +37,5 @@ if __name__ == '__main__':
     tree = ModuleTree(all_modules['ChipTop'], all_modules, all_module_instances)
     tree.setup_tree()
 
+    print(tree)
+

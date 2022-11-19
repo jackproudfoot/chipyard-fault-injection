@@ -62,6 +62,27 @@ class ModuleTree:
         return current_node
 
 
+
+    def __str__(self):
+        tree_str = _inst_str(self.rootInstance, last_child = True)
+
+        return tree_str
+
+def _inst_str(module_inst, layer = '', last_child = False):
+    spaces = layer + f'\u2502 ' if not last_child else layer + f'  '
+    inst_str = f'\033[94m{module_inst.module.type}\033[00m {module_inst.name}'
+
+    for i, child in enumerate(module_inst._children):
+        last_child = i + 1 == len(module_inst._children)
+        tree_symbol = '\u251c' if not last_child else '\u2514'
+
+        inst_str += f'\n{spaces}{tree_symbol}\u2500{_inst_str(child, layer=spaces, last_child=last_child )}'
+
+    return inst_str
+
+    
+
+
         
             
 
