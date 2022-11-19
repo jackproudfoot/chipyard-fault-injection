@@ -95,11 +95,11 @@ class Module:
             
             # first go through and replace all assignments with original
             for group in groups:
-                self.module_text = re.sub(rf'{sample_wire}{group[0]}', rf'{sample_wire_original}{group[0]}', self.module_text)
+                self.module_text = re.sub(rf'{sample_wire}{group[0]} ', rf'{sample_wire_original}{group[0]} ', self.module_text)
             
 
             # create reg for original holding value and add fault injection
-            groups = re.findall(rf'reg(\s+(?:\[(\d+:\d)\])?\s*){sample_wire}', self.module_text)
+            groups = re.findall(rf'reg(\s+(?:\[(\d+:\d)\])?\s*){sample_wire};', self.module_text)
             if len(groups) > 0:
                 
                 # circuit for injection logic and the substition pattern
@@ -128,7 +128,7 @@ class Module:
                     injection_circuit = f'wire {sample_wire} = fault_input;'
                     substitution = f'{injection_circuit} // fault injection\n  assign fault_output = {sample_wire_original}; // direct original value to output \n {original_placeholder}'
 
-                self.module_text = re.sub(rf'reg(\s+(?:\[(\d+:\d)\])?\s*){sample_wire}', substitution, self.module_text)
+                self.module_text = re.sub(rf'reg(\s+(?:\[(\d+:\d)\])?\s*){sample_wire};', substitution, self.module_text)
                 return
 
 
@@ -138,7 +138,7 @@ class Module:
 
             
         print(f'\033[91mError: could not inject fault into wire {sample_wire}.\033[0m')
-        exit(1)
+        
         
     '''
     Parse inputs/outputs from the module

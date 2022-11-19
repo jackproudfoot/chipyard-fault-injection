@@ -81,9 +81,14 @@ if __name__ == '__main__':
 #         else: 
 #             print(n + " has " + str(l) + " instances")
 
-#     # for wire in all_modules['ALUUnit'].wires:
-#     #     all_modules['ALUUnit'].inject_fault(wire.name)
+#     for wire in all_modules['ALUUnit'].wires:
+#         all_modules['ALUUnit'].inject_fault(wire.name)
 
-#     all_modules['ALUUnit'].inject_fault('r_uops_0_bypassable')
+#     for name, type in all_modules['ALUUnit'].io.items():
+#         if type == 'output':
+#             all_modules['ALUUnit'].inject_fault(name)
+
+#     # all_modules['ALUUnit'].inject_fault('r_uops_0_bypassable')
+
 #     print(all_modules['ALUUnit'].module_text)
 
