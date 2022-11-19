@@ -31,19 +31,30 @@ class ModuleTree:
                 self._find_children(child_module_instance)
                 self.all_module_instances[pc[0]].extend([child_module_instance])
 
+
+    #Path format: /child1/child2/..../target:wire
+
     '''
     Given some path, checks if it is a valid one
     '''
-    def check_if_valid_path(self, path):      # path = string
-        nodes = path.strip().split("/")
+    def check_if_valid_path(self, path):
+        nodes, wire = path.strip().split(":")
+        nodes = nodes.split("/")
         current_node = self.rootInstance
-        for n in nodes:
+        for i in range(0, len(nodes)):
+            n = nodes[i]
             if n.isspace() or not n:
                 continue 
             child_name = n
             if child_name not in current_node.get_children_names():
                 return False
             current_node = current_node.get_child_module_instance(child_name)
+            if (i == len(nodes)-1):
+                if wire == ".":
+                    return True
+                if not current_node.module.is_valid_wire(wire):
+                    print ("recognized module path, but wire unrecognized for target module")
+                    return False
         return True
 
     '''
@@ -53,16 +64,11 @@ class ModuleTree:
         if not self.check_if_valid_path(path):
             print("invalid path")
             return
-        nodes = path.strip().split("/")
+        nodes, wire = path.strip().split(":")
+        nodes = nodes.split("/")
         current_node = self.rootInstance
         for n in nodes:
             if n.isspace() or not n:
                 continue
             current_node = current_node.get_child_module_instance(n)
         return current_node
-
-
-        
-            
-
-            
