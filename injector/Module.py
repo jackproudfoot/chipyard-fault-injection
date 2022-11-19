@@ -18,7 +18,6 @@ class Wire:
         return '{} {} {}'.format(self.type, self.name, '[{}:{}]'.format(self.bounds[0], self.bounds[1]) if self.bounds else '')
 
 class Module:
-    #def __init__(self, name, module_text, parents = None, children = None):
     def __init__(self, type, module_text):
         self.type = type
         self.module_text = module_text
@@ -32,6 +31,7 @@ class Module:
             exit(1)
 
         self._parse_io()
+        self.extract_wires()
 
     def extract_wires(self):
         wires = re.findall(r'(wire|reg)\s+(?:\[(\d+:\d)\])?\s*(\w+)(?:;|(?: = .+?;))(?: \/\/ @\[(.*?)\])?', self.module_text, flags=re.S)
@@ -44,19 +44,102 @@ class Module:
     '''
     Injects fault into module wires
     '''
-    def inject_fault(self):
-        #sample_wire = random.sample(self.wires, 1)[0]
+    def inject_fault(self, sample_wire):
+        # name of placeholder wire for original fault-free value 
+        sample_wire_original = f'{sample_wire}_original'
 
-        sample_wire = '_r_valids_0_T'
+        # match case "wire wire_name =" or "assign wire_name = "
+        groups = re.findall(rf'(wire|assign)(\s+(?:\[(\d+:\d)\])?\s*){sample_wire}( = )', self.module_text)
+        if len(groups) > 0:
+            if len(groups) > 1:
+                print(f'\033[93mWarning: found more than one declaration for wire {sample_wire}... using the first.\033[0m')
 
-        wire_type = 'unknown'
 
-        # match case "wire wire_name ="
-        if re.search(rf'wire\s+(?:\[(\d+:\d)\])?\s*{sample_wire} = ', self.module_text) != None:
-            wire_type = 'wire inline'
-        else:
-            print('not found')
+            # circuit for injection logic and the substition pattern
+            injection_circuit = ''
+            substitution = ''
 
+            # format the placeholder for the original wire value
+            original_placeholder = f'wire{groups[0][1]}{sample_wire_original}{groups[0][3]}'
+
+            # if the wire is a bus i.e. test[4:0] only inject fault in a single bit
+            bounds_string = groups[0][1].strip()
+            if (bounds_string != ''):
+                bounds = bounds_string[1:-1].split(':')
+                faulty_index = random.randrange(int(bounds[1]), int(bounds[0]))
+
+                # determine concatination pattern for injecting faulty bit based on indices
+                bus_concatination = ''
+                if faulty_index < int(bounds[0]):
+                    bus_concatination += f'{sample_wire_original}[{bounds[0]}, {faulty_index}]'
+                bus_concatination += f', {sample_wire}_faultybit'
+                if faulty_index > int(bounds[1]):
+                    bus_concatination += f', {sample_wire_original}[{faulty_index-1}, {bounds[1]}]'
+
+                injection_circuit = f'wire {sample_wire}_faultybit = fault_input;\n {groups[0][0]} {sample_wire} = {{{bus_concatination}}}'
+                substitution = f'{injection_circuit} // fault injection \n  assign fault_output = {sample_wire_original}[{faulty_index}]; // direct original value to output \n  {original_placeholder}'
+            
+            # else the wire is a single bit
+            else:
+                injection_circuit = f'{groups[0][0]} {sample_wire} = fault_input;'
+                substitution = f'{injection_circuit} // fault injection \n  assign fault_output = {sample_wire_original}; // direct original value to output \n  {original_placeholder}'
+
+
+            # substitute the module text with the fault-controllable module
+            self.module_text = re.sub(rf'(?:wire|assign)(\s+(?:\[(\d+:\d)\])?\s*){sample_wire}( = )', substitution, self.module_text)
+            return
+
+        # match case for regs "reg_name <=" or "reg_name = "
+        groups = re.findall(rf'{sample_wire}( (?:=|<=) )', self.module_text)
+        if len(groups) > 0:
+            
+            # first go through and replace all assignments with original
+            for group in groups:
+                self.module_text = re.sub(rf'{sample_wire}{group[0]} ', rf'{sample_wire_original}{group[0]} ', self.module_text)
+            
+
+            # create reg for original holding value and add fault injection
+            groups = re.findall(rf'reg(\s+(?:\[(\d+:\d)\])?\s*){sample_wire};', self.module_text)
+            if len(groups) > 0:
+                
+                # circuit for injection logic and the substition pattern
+                injection_circuit = ''
+                substitution = ''
+                original_placeholder = f'reg{groups[0][0]}{sample_wire_original}'
+
+                # if the reg is a bus, only inject fault into single bit of bus
+                bounds_string = groups[0][1]
+                if (bounds_string != ''):
+                    bounds = bounds_string.split(':')
+                    faulty_index = random.randrange(int(bounds[1]), int(bounds[0]))
+
+                    # determine concatination pattern for injecting faulty bit
+                    bus_concatination = ''
+                    if faulty_index < int(bounds[0]):
+                        bus_concatination += f'{sample_wire_original}[{bounds[0]}, {faulty_index}]'
+                    bus_concatination += f', {sample_wire}_faultybit'
+                    if faulty_index > int(bounds[1]):
+                        bus_concatination += f', {sample_wire_original}[{faulty_index-1}, {bounds[1]}]'
+
+                    injection_circuit = f'wire {sample_wire}_faultybit = fault_input;\nwire{groups[0][0]}{sample_wire} = {{{bus_concatination}}}'
+                    substitution = f'{injection_circuit} // fault injection \n  assign fault_output = {sample_wire_original}[{faulty_index}]; // direct original value to output \n  {original_placeholder}'
+                    
+                else:
+                    injection_circuit = f'wire {sample_wire} = fault_input;'
+                    substitution = f'{injection_circuit} // fault injection\n  assign fault_output = {sample_wire_original}; // direct original value to output \n {original_placeholder}'
+
+                self.module_text = re.sub(rf'reg(\s+(?:\[(\d+:\d)\])?\s*){sample_wire};', substitution, self.module_text)
+                return
+
+
+            else:
+                print(f'\033[91mError: could not find where reg is declared {sample_wire}.\033[0m')
+                exit(1)
+
+            
+        print(f'\033[91mError: could not inject fault into wire {sample_wire}.\033[0m')
+        
+        
     '''
     Parse inputs/outputs from the module
     '''

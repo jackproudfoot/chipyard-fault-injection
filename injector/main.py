@@ -30,8 +30,10 @@ def parse_file(file_path):
     return module_dict, module_instance_dict
 
 
+
 if __name__ == '__main__':
     
     all_modules, all_module_instances = parse_file('chipyard.TestHarness.SmallBoomConfig.top.v')        #smallboomconfig should be 475 modules 
     tree = ModuleTree(all_modules['ChipTop'], all_modules, all_module_instances)
     tree.setup_tree()
+
