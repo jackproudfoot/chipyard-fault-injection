@@ -31,6 +31,7 @@ def parse_file(file_path):
     return module_dict, module_instance_dict
 
 
+
 if __name__ == '__main__':
     
     all_modules, all_module_instances = parse_file('alu.v')        #smallboomconfig should be 475 modules 
@@ -40,5 +41,7 @@ if __name__ == '__main__':
     print(tree)
 
 
-    print(generate_fault_driver(['ALU:slt', 'ALU:_T_2']).module_text)
+    # print(generate_fault_driver(['ALU:slt', 'ALU:_T_2']).module_text)
+
+    tree.dump('output.v')
 

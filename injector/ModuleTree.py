@@ -74,6 +74,37 @@ class ModuleTree:
         return current_node
 
 
+    '''
+    Dump module text of all nodes in tree to file
+    '''
+    def dump(self, path):
+        with open(path, 'w') as verilog_file:
+            
+            # dict to track what modules have already been written
+            written_modules = {}
+            
+            # stack for pre-order traversal
+            stack = []
+            stack.append(self.rootInstance)
+
+            while len(stack) > 0:
+                inst = stack.pop()
+
+                # if module has not already been written, write it
+                if inst.module.type not in written_modules:
+                    verilog_file.write(inst.module.module_text)
+                    verilog_file.write('\n')
+                    written_modules[inst.module.type] = True
+
+                # add children to stack
+                stack += inst._children
+
+
+
+
+
+            
+
 
     def __str__(self):
         tree_str = _inst_str(self.rootInstance, last_child = True)
