@@ -54,23 +54,10 @@ def start_finding_children_recursion(top_module):       #give string for Module 
         return
 
 
-# def check_parent_child(all_modules, parent_name, child_name):
-#     if (parent_name in all_modules.keys() and child_name in all_modules.keys()):
-#         child = all_modules[child_name]
-#         parent = all_modules[parent_name]
-#         if (child in parent._children and parent in child._parents):
-#             print (parent.name + " <-> " + child.name)
-#             return
-#         elif (child in parent._children and parent not in child._parents) :
-#             print ("parent " + parent.name + " has child " + child.name + " but child doesn't have parent")
-#             return
-#         elif (parent in child._parents and child not in parent._children):
-#             print ("child " + child.name + " has parent " + parent.name + " but parent doesn't have child")
-#             return
-
 if __name__ == '__main__':
     
     all_modules, all_module_instances = parse_file('chipyard.TestHarness.SmallBoomConfig.top.v')        #smallboomconfig should be 475 modules 
+    
     start_finding_children_recursion('ChipTop')
     for n in all_module_instances:
         m = all_module_instances[n]
@@ -81,19 +68,22 @@ if __name__ == '__main__':
             print(n + " has " + str(l) + " instances")
     
 
-   
-   
-   
-   #From below code + parents/children logic moved to Module instead of ModuleInstance, found that the top-level module is ChipTop (the only module with 0 parents)
+# if __name__ == '__main__':
+    
+#     all_modules, all_module_instances = parse_file('alu.v')        #smallboomconfig should be 475 modules 
+    
+#     start_finding_children_recursion('ALUUnit')
+#     for n in all_module_instances:
+#         m = all_module_instances[n]
+#         l = len(m)
+#         if (l == 0):
+#             print(n + " has " + str(l) + " instances ----------------------------")
+#         else: 
+#             print(n + " has " + str(l) + " instances")
 
-    # set_all_parent_children(all_modules)
-    # count = 0
-    # for n in all_modules:
-    #     m = all_modules[n]
-    #     if (len(m._parents) == 0):
-    #         count += 1
-    #         print(m.type + ": " + str(len(m._parents)) + " parents, " + str(len(m._children)) + " children")
-    # print("num parentless modules = " + str(count))
+#     # for wire in all_modules['ALUUnit'].wires:
+#     #     all_modules['ALUUnit'].inject_fault(wire.name)
 
-
+#     all_modules['ALUUnit'].inject_fault('r_uops_0_bypassable')
+#     print(all_modules['ALUUnit'].module_text)
 
