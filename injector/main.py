@@ -33,12 +33,12 @@ def parse_file(file_path):
 
 if __name__ == '__main__':
     
-    all_modules, all_module_instances = parse_file('chipyard.TestHarness.SmallBoomConfig.top.v')        #smallboomconfig should be 475 modules 
-    tree = ModuleTree(all_modules['ChipTop'], all_modules, all_module_instances)
+    all_modules, all_module_instances = parse_file('alu.v')        #smallboomconfig should be 475 modules 
+    tree = ModuleTree(all_modules['ALUUnit'], all_modules, all_module_instances)
     tree.setup_tree()
 
-    # print(tree)
+    print(tree)
 
 
-    print(generate_fault_driver(['ALU/Adder:test', 'ALU/Adder:test2', 'Multdiv/Counter:test3']))
+    print(generate_fault_driver(['ALU:slt', 'ALU:_T_2']).module_text)
 
