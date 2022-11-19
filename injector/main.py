@@ -30,6 +30,17 @@ def parse_file(file_path):
     return module_dict, module_instance_dict
 
 
+def generate_fault_driver(faults):
+    module_header = f'module fault_driver (\n  input  [{len(faults)}:0] original_value;\n  output [{len(faults)}:0] faulty_value;\n)'
+    module_footer = '\nendmodule'
+
+    module_body = ''
+
+    for i, fault in enumerate(faults):
+        module_body += f'\n\n  // fault injection from {fault}\n  assign faulty_value[{i}] = 0;'
+
+    return module_header + module_body + module_footer
+
 
 if __name__ == '__main__':
     
@@ -37,5 +48,8 @@ if __name__ == '__main__':
     tree = ModuleTree(all_modules['ChipTop'], all_modules, all_module_instances)
     tree.setup_tree()
 
-    print(tree)
+    #print(tree)
+
+
+    print(generate_fault_driver(['ALU/Adder:test', 'ALU/Adder:test2', 'Multdiv/Counter:test3']))
 
