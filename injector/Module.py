@@ -67,6 +67,21 @@ class Module:
         for module_input in io:
             self.io[module_input[1]] = module_input[0]
 
+
+    '''
+    Given some wire name, check if that is a known wire for this module.
+    '''
+    def is_valid_wire(self, wire_name):
+        for wire in self.wires:
+            if wire.name ==  wire_name:
+                return True
+        return False
+
+    
+    #test that strings are passed by value
+    def create_faulty_copy(self):
+        return Module('{}_FAULTY'.format(self.type), self.module_text)
+
     '''
     String representation for the module class
     '''

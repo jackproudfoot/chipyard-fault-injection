@@ -4,15 +4,33 @@ class ModuleInstance:
         self.module = module_type
         self.name = instance_name
 
-        self._parents = list()
+        self._parent = None
         self._children = list()
 
+        self._num_faulty_children = 0
+
     '''
-    Add list of references to parent ModuleInstances
+    Gets list of all parent ModuleInstances, all the way to the top module.
     '''
-    def add_parents(self, parents):
-        #self._parents += parents
-        self._parents.extend(parents)
+    def get_all_parents(self):
+        lst = list()
+        current = self
+        while (current._parent != None):
+            lst.append(current)
+            current = current._parent  #technically should only ever be 1 parent so maybe this shouldnt even be a list
+        # append final "current" ie topmost
+        lst.append(current)
+        return lst
+
+    '''
+    Get string representation of all parent ModuleInstances, all the way to the top module.
+    '''
+    def get_path(self):
+        path = ""
+        for mi in reversed(self.get_all_parents()):
+            path += "/{}".format(mi.name)
+        return path
+
 
     '''
     Add list of references to child ModuleInstances
@@ -20,6 +38,27 @@ class ModuleInstance:
     def add_children(self, children):
         #self._children += children
         self._children.extend(children)
+
+
+    '''
+    Get list of names of all child ModuleInstances
+    '''    
+    def get_children_names(self):
+        lst = list()
+        for mi in self._children:
+            lst.append(mi.name)
+        return lst
+
+    '''
+    Get some child ModuleInstance by name
+    '''
+    def get_child_module_instance(self, child_name):
+        if child_name not in self.get_children_names():
+            print('No child of name {} for {} {}'.format(child_name, self.module.type, self.name))
+            return
+        for mi in self._children:
+            if mi.name == child_name:
+                return mi
 
     '''
     String representation for the ModuleInstance class
