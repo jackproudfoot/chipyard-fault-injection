@@ -4,6 +4,7 @@ import sys
 from Module import Module
 from ModuleInstance import ModuleInstance
 from ModuleTree import ModuleTree
+from fault_driver import generate_fault_driver
 
 all_modules = dict()    #module name to Module
 faulty_modules = dict()     #module 
@@ -30,25 +31,13 @@ def parse_file(file_path):
     return module_dict, module_instance_dict
 
 
-def generate_fault_driver(faults):
-    module_header = f'module fault_driver (\n  input  [{len(faults)}:0] original_value;\n  output [{len(faults)}:0] faulty_value;\n)'
-    module_footer = '\nendmodule'
-
-    module_body = ''
-
-    for i, fault in enumerate(faults):
-        module_body += f'\n\n  // fault injection from {fault}\n  assign faulty_value[{i}] = 0;'
-
-    return module_header + module_body + module_footer
-
-
 if __name__ == '__main__':
     
     all_modules, all_module_instances = parse_file('chipyard.TestHarness.SmallBoomConfig.top.v')        #smallboomconfig should be 475 modules 
     tree = ModuleTree(all_modules['ChipTop'], all_modules, all_module_instances)
     tree.setup_tree()
 
-    #print(tree)
+    # print(tree)
 
 
     print(generate_fault_driver(['ALU/Adder:test', 'ALU/Adder:test2', 'Multdiv/Counter:test3']))
