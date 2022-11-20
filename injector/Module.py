@@ -1,5 +1,6 @@
 import random
 import re
+import copy
 
 
 class Wire:
@@ -174,9 +175,10 @@ class Module:
                 return bit_num <= wire.bounds[0] and bit_num >= wire.bounds[1]
 
     
-    #test that strings are passed by value
     def create_faulty_copy(self):
-        return Module('{}_FAULTY'.format(self.type), self.module_text)
+        faulty_copy = copy.deepcopy(self)
+        faulty_copy.type = f'{self.type}_FAULTY'
+        return faulty_copy
 
     '''
     String representation for the module class

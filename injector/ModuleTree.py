@@ -80,6 +80,7 @@ class ModuleTree:
 
 
     '''
+<<<<<<< HEAD
     Main function to map fault IO throughout tree up to the root
     Expecting input such as (all_modules['ModB'], ['/Root/a_module_1/b_module_2', '/Root/a_module_2/b_module_1'], ['b_wire_1', 'b_wire_2', 'b_wire_3', 'b_wire_4'])
     '''
@@ -119,4 +120,47 @@ class ModuleTree:
                 currentnode._faulty_child_paths.append(below)            
                 currentnode = currentnode.get_child_module_instance(nodes[i])
         return num_valid_paths
+
+    '''
+    Dump module text of all nodes in tree to file
+    '''
+    def dump(self, path):
+        with open(path, 'w') as verilog_file:
             
+            # dict to track what modules have already been written
+            written_modules = {}
+            
+            # stack for pre-order traversal
+            stack = []
+            stack.append(self.rootInstance)
+
+            while len(stack) > 0:
+                inst = stack.pop()
+
+                # if module has not already been written, write it
+                if inst.module.type not in written_modules:
+                    verilog_file.write(inst.module.module_text)
+                    verilog_file.write('\n')
+                    written_modules[inst.module.type] = True
+
+                # add children to stack
+                stack += inst._children
+
+
+
+    def __str__(self):
+        tree_str = _inst_str(self.rootInstance, last_child = True)
+
+        return tree_str
+
+def _inst_str(module_inst, layer = '', last_child = False):
+    spaces = layer + f'\u2502 ' if not last_child else layer + f'  '
+    inst_str = f'\033[94m{module_inst.module.type}\033[00m {module_inst.name}'
+
+    for i, child in enumerate(module_inst._children):
+        last_child = i + 1 == len(module_inst._children)
+        tree_symbol = '\u251c' if not last_child else '\u2514'
+
+        inst_str += f'\n{spaces}{tree_symbol}\u2500{_inst_str(child, layer=spaces, last_child=last_child )}'
+
+    return inst_str

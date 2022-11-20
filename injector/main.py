@@ -3,6 +3,7 @@ import re
 import sys
 from Module import Module
 from ModuleTree import ModuleTree
+from fault_driver import generate_fault_driver
 
 all_modules = dict()    #module name to Module
 faulty_modules = dict()     #module 
@@ -31,7 +32,6 @@ def parse_file(file_path):
 
 
 if __name__ == '__main__':
-    
     # all_modules, all_module_instances = parse_file('chipyard.TestHarness.SmallBoomConfig.top.v')        #smallboomconfig should be 475 modules 
     # tree = ModuleTree(all_modules['ChipTop'], all_modules, all_module_instances)
     # tree.setup_tree()
@@ -60,4 +60,5 @@ if __name__ == '__main__':
     Tree.get_node_from_path to get the actual target module instance and then apply whatever 
     changes we want to it.
     """
+
 
