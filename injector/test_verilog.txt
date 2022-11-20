@@ -1,0 +1,86 @@
+module Top();
+    wire to_a1_in_1;
+    wire to_a1_in_2;
+    wire to_a1_in_3;
+    wire from_a1_out_1;
+    wire from_a1_out_2;
+    wire to_a2_in_1;
+    wire to_a2_in_2;
+    wire to_a2_in_3;
+    wire from_a2_out_1;
+    wire from_a2_out_2;
+    wire to_b3_in_1;
+    wire to_b3_in_2;
+
+    ModA a_module_1 (
+        .a_in_1(to_a1_in_1),
+        .a_in_2(to_a1_in_2),
+        .a_in_3(to_a1_in_3),
+        .a_out_1(from_a1_out_1),
+        .a_out_2(from_a1_out_2)
+    );
+
+    ModA a_module_2 (
+        .a_in_1(to_a2_in_1),
+        .a_in_2(to_a2_in_2),
+        .a_in_3(to_a2_in_3),
+        .a_out_1(from_a2_out_1),
+        .a_out_2(from_a2_out_2)
+    );
+
+    ModB b_module_3 (
+        .b_in_1(to_b3_in_1),
+        .b_in_2(to_b3_in_2)
+    );
+endmodule
+
+
+module ModA(
+    input a_in_1,
+    input a_in_2,
+    input a_in_3,
+    output a_out_1,
+    output a_out_2
+);
+
+    wire to_b1_in_1;
+    wire to_b1_in_2;
+    wire to_b2_in_1;
+    wire to_b2_in_2;
+
+    ModB b_module_1 (
+        .b_in_1(to_b1_in_1),
+        .b_in_2(to_b1_in_2)
+    );
+
+    ModB b_module_2 (
+        .b_in_1(to_b2_in_1),
+        .b_in_2(to_b2_in_2)
+    );
+endmodule
+
+
+module ModB(
+    input b_in_1,
+    input b_in_2
+);
+
+    wire b_wire_1;
+    wire b_wire_2;
+    wire b_wire_3;
+
+    wire b_wire_4 = 1;
+
+    wire to_c1_in_1;
+
+    ModC c_module_1 (
+        .c_in_1(to_c1_in_1)
+    );
+endmodule
+
+module ModC(
+    input c_in_1
+);
+
+    wire c_wire_1;
+endmodule

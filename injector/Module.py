@@ -160,6 +160,19 @@ class Module:
                 return True
         return False
 
+    '''
+    Given some wire and bit, checks if that is a valid bit for that wire's bounds.
+    '''
+    def check_wire_bit(self, wire_name, bit_num):
+        if not self.is_valid_wire(wire_name):
+            print("invalid wire name")
+            return
+        for wire in self.wires:
+            if wire.name == wire_name:
+                if wire.bounds is None:
+                    return True         #figure if the wire is 1 bit, we will just ignore whatever bit position the user said they wanted to modify and just modify the single bit of the wire
+                return bit_num <= wire.bounds[0] and bit_num >= wire.bounds[1]
+
     
     #test that strings are passed by value
     def create_faulty_copy(self):

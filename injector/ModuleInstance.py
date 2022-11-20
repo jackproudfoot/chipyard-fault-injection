@@ -7,27 +7,29 @@ class ModuleInstance:
         self._parent = None
         self._children = list()
 
-        self._num_faulty_children = 0
+        self._faulty_child_paths = list()
+
 
     '''
     Gets list of all parent ModuleInstances, all the way to the top module.
     '''
-    def get_all_parents(self):
+    def get_all_parents(self, append_root=True):
         lst = list()
         current = self
         while (current._parent != None):
             lst.append(current)
             current = current._parent  #technically should only ever be 1 parent so maybe this shouldnt even be a list
         # append final "current" ie topmost
-        lst.append(current)
+        if (append_root):
+            lst.append(current)
         return lst
 
     '''
     Get string representation of all parent ModuleInstances, all the way to the top module.
     '''
-    def get_path(self):
+    def get_path(self, include_root=True):
         path = ""
-        for mi in reversed(self.get_all_parents()):
+        for mi in reversed(self.get_all_parents(include_root)):
             path += "/{}".format(mi.name)
         return path
 
