@@ -168,7 +168,7 @@ class ModuleInstance:
         new_type = f'{self.module.type}_{digest}'
 
         # determine the fault i/o bounds
-        fault_io_bounds = '' if len(self._faulty_child_paths) == 0 else f'[{len(self._faulty_child_paths) - 1}:0]'
+        fault_io_bounds = '' if len(self._faulty_child_paths) < 2 else f'[{len(self._faulty_child_paths) - 1}:0]'
 
         if root:
             # add fault driver module
@@ -182,7 +182,6 @@ class ModuleInstance:
         
         else:
             # modify the input/output of the module
-            module_declaration = re.findall(rf'module {self.module.type}\(\n', self.module.module_text)[0]
 
             # add fault_inputs and fault_outputs to module i/o
             mod_fault_input_wire = f'input\t\t{fault_io_bounds}\tfault_inputs,'

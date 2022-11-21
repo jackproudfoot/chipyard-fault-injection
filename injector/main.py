@@ -56,8 +56,6 @@ if __name__ == '__main__':
     tree.rootInstance.mark_fault('/Root/system/tile_prci_domain/tile_reset_domain/boom_tile/core/csr_exe_unit/alu/alu/:slt')
     tree.rootInstance.mark_fault('/Root/system/tile_prci_domain/tile_reset_domain/boom_tile/core/mem_units_0/maddrcalc/:_io_resp_valid_T_1')
     
-    
-
     tree.inject_faults()
     tree.dump('output.v')
 
