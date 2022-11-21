@@ -81,8 +81,8 @@ module ALUUnit(
   input         io_get_ftq_pc_next_val,
   input  [39:0] io_get_ftq_pc_next_pc
 );
-	wire [1:0] fault_inputs;
-	wire [1:0] fault_outputs;
+	wire  fault_inputs;
+	wire  fault_outputs;
 	FaultDriver fault_driver (
 		.original_values(fault_outputs)
 		.faulty_values(fault_inputs)
@@ -265,9 +265,9 @@ module ALUUnit(
   reg [63:0] r_data_0; // @[functional-unit.scala 440:19]
   reg [63:0] r_data_1; // @[functional-unit.scala 440:19]
   reg [63:0] r_data_2; // @[functional-unit.scala 440:19]
-  ALU_db777e5a3358a462e95c843513378d61bc077624eecf921fafefa45ad5683f33 alu ( // @[functional-unit.scala 320:19]
-		.fault_inputs({fault_inputs[0], fault_inputs[1]}),
-		.fault_outputs({fault_outputs[0], fault_outputs[1]}),
+  ALU_240c21c226d7f6e2d600190f523972295771794d76d57b33b3a74f91f89d3bee alu ( // @[functional-unit.scala 320:19]
+		.fault_inputs(fault_inputs),
+		.fault_outputs(fault_outputs),
     .io_dw(alu_io_dw),
     .io_fn(alu_io_fn),
     .io_in2(alu_io_in2),
@@ -493,19 +493,16 @@ end // initial
 `endif // SYNTHESIS
 endmodule
 module FaultDriver (
-  input  [1:0] original_values;
-  output [1:0] faulty_values;
+  input original_values;
+  output faulty_values;
 )
 
   // fault injection from /Root/alu/:slt
-  assign faulty_values[0] = 0;
-
-  // fault injection from /Root/alu/:_T_2
-  assign faulty_values[1] = 0;
+  assign faulty_values = 0;
 endmodule
-module ALU_db777e5a3358a462e95c843513378d61bc077624eecf921fafefa45ad5683f33(
-	input		[1:0]	fault_inputs,
-	output		[1:0]	fault_outputs,
+module ALU_240c21c226d7f6e2d600190f523972295771794d76d57b33b3a74f91f89d3bee(
+	input			fault_inputs,
+	output			fault_outputs,
   input         io_dw,
   input  [3:0]  io_fn,
   input  [63:0] io_in2,
@@ -519,12 +516,10 @@ module ALU_db777e5a3358a462e95c843513378d61bc077624eecf921fafefa45ad5683f33(
   wire [63:0] _io_adder_out_T_1 = io_in1 + in2_inv; // @[ALU.scala 64:26]
   wire [63:0] _GEN_1 = {{63'd0}, io_fn[3]}; // @[ALU.scala 64:36]
   wire  _slt_T_7 = io_fn[1] ? io_in2[63] : io_in1[63]; // @[ALU.scala 69:8]
-  wire slt = fault_inputs[0]; // fault injection 
-  assign fault_outputs[0] = slt_original; // direct original value to output 
+  wire slt = fault_inputs; // fault injection 
+  assign fault_outputs = slt_original; // direct original value to output 
   wire  slt_original = io_in1[63] == io_in2[63] ? io_adder_out[63] : _slt_T_7; // @[ALU.scala 68:8]
-  wire _T_2 = fault_inputs[1]; // fault injection 
-  assign fault_outputs[1] = _T_2_original; // direct original value to output 
-  wire  _T_2_original = io_fn[3] & io_in1[31]; // @[ALU.scala 77:46]
+  wire  _T_2 = io_fn[3] & io_in1[31]; // @[ALU.scala 77:46]
   wire [31:0] _T_4 = _T_2 ? 32'hffffffff : 32'h0; // @[Bitwise.scala 74:12]
   wire [31:0] _T_7 = io_dw ? io_in1[63:32] : _T_4; // @[ALU.scala 78:24]
   wire  _T_10 = io_in2[5] & io_dw; // @[ALU.scala 79:33]

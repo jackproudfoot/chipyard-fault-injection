@@ -167,8 +167,6 @@ class ModuleInstance:
 
             
 
-            
-
             new_child_type = self.get_child_module_instance(child_name).module.type
             child_declaration = re.findall(rf'{child_name} \(.*?\n', self.module.module_text, re.MULTILINE)[0]
 
