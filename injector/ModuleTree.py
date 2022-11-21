@@ -1,6 +1,7 @@
 from Module import Module
 from ModuleInstance import ModuleInstance
 import re
+from fault_driver import generate_fault_driver
 
 class ModuleTree:
     def __init__(self, rootNode, all_modules, all_module_instances):        #valid modules = all_modules dict, rootNode = actual Module of the root
@@ -80,7 +81,6 @@ class ModuleTree:
 
 
     '''
-<<<<<<< HEAD
     Main function to map fault IO throughout tree up to the root
     Expecting input such as (all_modules['ModB'], ['/Root/a_module_1/b_module_2', '/Root/a_module_2/b_module_1'], ['b_wire_1', 'b_wire_2', 'b_wire_3', 'b_wire_4'])
     '''
@@ -122,6 +122,34 @@ class ModuleTree:
         return num_valid_paths
 
     '''
+    Inject all marked faults into the modules
+    '''
+    def inject_faults(self):
+        # stack for tree traversal
+        stack = []
+        
+        fault_driver = generate_fault_driver(self.rootInstance._faulty_child_paths)
+        
+        self.rootInstance.inject_faults(root=True, fault_driver=fault_driver.type)
+
+        stack += self.rootInstance._children
+
+        self.rootInstance._children.append(ModuleInstance(fault_driver, 'fault_driver'))
+        
+
+        while len(stack) > 0:
+            inst = stack.pop()
+
+            # inject faults in the current module instance
+            inst.inject_faults()
+
+            # add children to the stack
+            stack += inst._children
+
+
+
+
+    '''
     Dump module text of all nodes in tree to file
     '''
     def dump(self, path):
@@ -155,7 +183,10 @@ class ModuleTree:
 
 def _inst_str(module_inst, layer = '', last_child = False):
     spaces = layer + f'\u2502 ' if not last_child else layer + f'  '
-    inst_str = f'\033[94m{module_inst.module.type}\033[00m {module_inst.name}'
+
+    name = f'\033[93m{module_inst.name}\033[00m' if len(module_inst._faulty_child_paths) > 0 else module_inst.name
+
+    inst_str = f'\033[94m{module_inst.module.type}\033[00m {name}'
 
     for i, child in enumerate(module_inst._children):
         last_child = i + 1 == len(module_inst._children)

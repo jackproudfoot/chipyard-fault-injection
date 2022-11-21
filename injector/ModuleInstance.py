@@ -1,3 +1,5 @@
+import hashlib
+import re
 
 class ModuleInstance:
     def __init__(self, module_type, instance_name):
@@ -61,6 +63,122 @@ class ModuleInstance:
         for mi in self._children:
             if mi.name == child_name:
                 return mi
+
+    '''
+    Mark fault in instance of a module and track where the path back to root
+    '''
+    def mark_fault(self, fault_path):
+        # track fault path for fault i/o routing
+        self._faulty_child_paths.append(fault_path)
+
+        path_parts = re.findall(r'\/\w+', fault_path)
+        
+        if len(path_parts) > 1:
+            child_name = path_parts[1][1:]
+
+            # search through children looking for next child in path
+            for child in self._children:
+                if child.name == child_name:
+                    path_remainder = re.findall(r'\/\w+(\/.*)', fault_path)[0]
+
+                    child.mark_fault(path_remainder)
+
+                    break
+            
+            # if child not found exit with an error
+            else:
+                print(f'Error: Could not find child {child_name} of parent {path_parts[0][1:]} in path {fault_path}.')
+                exit(1)
+
+        elif len(path_parts) == 0:
+            print(f'Error: Invalid fault path: {fault_path}')
+            exit(1)
+
+
+    def inject_faults(self, root=False, fault_driver=None):
+        # if no faulty wires or child modules don't do anything
+        if len(self._faulty_child_paths) == 0:
+            return
+
+        # make deepcopy of the module before changing the module text
+        self.module = self.module.copy()
+
+        # determine the fault i/o bounds
+        fault_io_bounds = '' if len(self._faulty_child_paths) == 0 else f'[{len(self._faulty_child_paths) - 1}:0]'
+
+        if root:
+            # add fault driver module
+            module_header = re.findall(rf'module \w+\(.*?\);\n', self.module.module_text, re.DOTALL | re.MULTILINE)[0]
+
+            # create wires for all fault i/o and instantiate fault driver module in root
+            wires = f'\twire {fault_io_bounds} fault_inputs;\n\twire {fault_io_bounds} fault_outputs;\n'
+            driver_module = f'\t{fault_driver} fault_driver (\n\t\t.original_values(fault_outputs)\n\t\t.faulty_values(fault_inputs)\n)\n'
+
+            self.module.module_text = re.sub(rf'module \w+\(.*?\);\n', module_header + wires + driver_module, self.module.module_text, flags= re.DOTALL | re.MULTILINE)
+        
+        else:
+            # modify the input/output of the module
+            module_declaration = re.findall(rf'module {self.module.type}\(\n', self.module.module_text)[0]
+
+            # add fault_inputs and fault_outputs to module i/o
+            mod_fault_input_wire = f'input\t\t{fault_io_bounds}\tfault_inputs,'
+            mod_fault_output_wire = f'output\t\t{fault_io_bounds}\tfault_outputs,'
+            self.module.module_text = re.sub(rf'module {self.module.type}\(\n', module_declaration + f'\t{mod_fault_input_wire}\n\t{mod_fault_output_wire}\n', self.module.module_text)
+
+        # dict to track which faults are associated with which child modules 
+        child_faults = {}
+
+        # inject faults in this module or organize wires to child modules
+        for i, path in enumerate(self._faulty_child_paths):
+            path_parts = re.findall(r'\/\w+', path)
+        
+            # if there's only one entry we've reached the final module
+            if len(path_parts) == 1:
+                wire_name_parts = re.findall(r':(\w+)', path)
+
+                # inject fault into the module text
+                fault_input_wire = 'fault_inputs' if len(self._faulty_child_paths) == 1 else f'fault_inputs[{i}]'
+                fault_output_wire = 'fault_outputs' if len(self._faulty_child_paths) == 1 else f'fault_outputs[{i}]'
+
+                self.module.inject_fault(wire_name_parts[0], fault_input_wire, fault_output_wire, wire_name_parts[1] if len(wire_name_parts) == 2 else None)
+
+            # if there are more than one path parts then the fault is in a child
+            else:
+                child_name = path_parts[1][1:]
+                
+                # if first time seeing the child, create list to track fault indices
+                if child_name not in child_faults:
+                    child_faults[child_name] = list()
+
+                child_faults[child_name].append(i)
+
+
+        # iterate over children on fault path and modify their module i/o
+        for child_name, fault_indices in child_faults.items():
+            
+            # determine fault input params mapping
+            fault_input_params = ''
+            fault_output_params = ''
+
+            for fault_index in fault_indices:
+                fault_input_params += f'fault_inputs[{fault_index}], '
+                fault_output_params += f'fault_outputs[{fault_index}], '
+
+            fault_input_params = fault_input_params[:-2]
+            fault_output_params = fault_output_params[:-2]
+
+            fault_input_string = f'.fault_inputs({{{fault_input_params}}})'
+            fault_output_string = f'.fault_outputs({{{fault_output_params}}})'
+
+            child_declaration = re.findall(rf'{child_name} \(.*?\n', self.module.module_text, re.MULTILINE)[0]
+
+            self.module.module_text = re.sub(rf'{child_name} \(.*?\n', child_declaration + f'\t\t{fault_input_string},\n\t\t{fault_output_string},\n', self.module.module_text)
+
+
+        # update the type of the new faulty module with sha256 hash to ensure uniqueness
+        digest = hashlib.sha256(self.module.module_text.encode()).hexdigest()
+        self.module.type = f'{self.module.type}_{digest}'
+            
 
     '''
     String representation for the ModuleInstance class

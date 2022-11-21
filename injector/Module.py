@@ -45,7 +45,7 @@ class Module:
     '''
     Injects fault into module wires
     '''
-    def inject_fault(self, sample_wire):
+    def inject_fault(self, sample_wire, fault_input_wire, fault_output_wire, bus_index = None):
         # name of placeholder wire for original fault-free value 
         sample_wire_original = f'{sample_wire}_original'
 
@@ -67,7 +67,7 @@ class Module:
             bounds_string = groups[0][1].strip()
             if (bounds_string != ''):
                 bounds = bounds_string[1:-1].split(':')
-                faulty_index = random.randrange(int(bounds[1]), int(bounds[0]))
+                faulty_index = bus_index if bus_index != None else random.randrange(int(bounds[1]), int(bounds[0]))
 
                 # determine concatination pattern for injecting faulty bit based on indices
                 bus_concatination = ''
@@ -77,13 +77,13 @@ class Module:
                 if faulty_index > int(bounds[1]):
                     bus_concatination += f', {sample_wire_original}[{faulty_index-1}, {bounds[1]}]'
 
-                injection_circuit = f'wire {sample_wire}_faultybit = fault_input;\n {groups[0][0]} {sample_wire} = {{{bus_concatination}}}'
-                substitution = f'{injection_circuit} // fault injection \n  assign fault_output = {sample_wire_original}[{faulty_index}]; // direct original value to output \n  {original_placeholder}'
+                injection_circuit = f'wire {sample_wire}_faultybit = {fault_input_wire};\n {groups[0][0]} {sample_wire} = {{{bus_concatination}}}'
+                substitution = f'{injection_circuit} // fault injection \n  assign {fault_output_wire} = {sample_wire_original}[{faulty_index}]; // direct original value to output \n  {original_placeholder}'
             
             # else the wire is a single bit
             else:
-                injection_circuit = f'{groups[0][0]} {sample_wire} = fault_input;'
-                substitution = f'{injection_circuit} // fault injection \n  assign fault_output = {sample_wire_original}; // direct original value to output \n  {original_placeholder}'
+                injection_circuit = f'{groups[0][0]} {sample_wire} = {fault_input_wire};'
+                substitution = f'{injection_circuit} // fault injection \n  assign {fault_output_wire} = {sample_wire_original}; // direct original value to output \n  {original_placeholder}'
 
 
             # substitute the module text with the fault-controllable module
@@ -122,12 +122,12 @@ class Module:
                     if faulty_index > int(bounds[1]):
                         bus_concatination += f', {sample_wire_original}[{faulty_index-1}, {bounds[1]}]'
 
-                    injection_circuit = f'wire {sample_wire}_faultybit = fault_input;\nwire{groups[0][0]}{sample_wire} = {{{bus_concatination}}}'
-                    substitution = f'{injection_circuit} // fault injection \n  assign fault_output = {sample_wire_original}[{faulty_index}]; // direct original value to output \n  {original_placeholder}'
+                    injection_circuit = f'wire {sample_wire}_faultybit = {fault_input_wire};\nwire{groups[0][0]}{sample_wire} = {{{bus_concatination}}}'
+                    substitution = f'{injection_circuit} // fault injection \n  assign {fault_output_wire} = {sample_wire_original}[{faulty_index}]; // direct original value to output \n  {original_placeholder}'
                     
                 else:
-                    injection_circuit = f'wire {sample_wire} = fault_input;'
-                    substitution = f'{injection_circuit} // fault injection\n  assign fault_output = {sample_wire_original}; // direct original value to output \n {original_placeholder}'
+                    injection_circuit = f'wire {sample_wire} = {fault_input_wire};'
+                    substitution = f'{injection_circuit} // fault injection\n  assign {fault_output_wire} = {sample_wire_original}; // direct original value to output \n {original_placeholder}'
 
                 self.module_text = re.sub(rf'reg(\s+(?:\[(\d+:\d)\])?\s*){sample_wire};', substitution, self.module_text)
                 return
@@ -174,11 +174,11 @@ class Module:
                     return True         #figure if the wire is 1 bit, we will just ignore whatever bit position the user said they wanted to modify and just modify the single bit of the wire
                 return bit_num <= wire.bounds[0] and bit_num >= wire.bounds[1]
 
-    
-    def create_faulty_copy(self):
-        faulty_copy = copy.deepcopy(self)
-        faulty_copy.type = f'{self.type}_FAULTY'
-        return faulty_copy
+    '''
+    Returns a copy of the module
+    '''
+    def copy(self):
+        return copy.deepcopy(self)
 
     '''
     String representation for the module class

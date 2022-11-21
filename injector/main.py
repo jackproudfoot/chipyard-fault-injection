@@ -36,19 +36,27 @@ if __name__ == '__main__':
     # tree = ModuleTree(all_modules['ChipTop'], all_modules, all_module_instances)
     # tree.setup_tree()
 
-    all_modules, all_module_instances = parse_file('test_verilog.txt')
+    all_modules, all_module_instances = parse_file('alu.v')
 
-    tree = ModuleTree(all_modules['Top'], all_modules, all_module_instances)
+    tree = ModuleTree(all_modules['ALUUnit'], all_modules, all_module_instances)
     tree.setup_tree()
 
-    tree.setup_fault_paths(all_modules['ModC'], ['/Root/a_module_1/b_module_1/c_module_1', '/b_module_3/c_module_1', 'root/totally/invalidpath/toignore'], ['c_wire_1', 'invalidwire'])
+    tree.rootInstance.mark_fault('/Root/alu/:slt')
+    tree.rootInstance.mark_fault('/Root/alu/:_T_2')
+    tree.inject_faults()
 
-    for ami in all_module_instances.keys():
-        for mi in all_module_instances[ami]:
-            if (len(mi._faulty_child_paths) != 0):
-                print("\n" + str(mi))
-                for path in mi._faulty_child_paths:
-                    print("\t{} routes to faulty module {}".format(mi.name, path))
+    tree.dump('output.v')
+
+    print(tree)
+
+    # tree.setup_fault_paths(all_modules['ModC'], ['/Root/a_module_1/b_module_1/c_module_1', '/b_module_3/c_module_1', 'root/totally/invalidpath/toignore'], ['c_wire_1', 'invalidwire'])
+
+    # for ami in all_module_instances.keys():
+    #     for mi in all_module_instances[ami]:
+    #         if (len(mi._faulty_child_paths) != 0):
+    #             print("\n" + str(mi))
+    #             for path in mi._faulty_child_paths:
+    #                 print("\t{} routes to faulty module {}".format(mi.name, path))
                 
     
     """
