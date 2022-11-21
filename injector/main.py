@@ -32,41 +32,36 @@ def parse_file(file_path):
 
 
 if __name__ == '__main__':
-    # all_modules, all_module_instances = parse_file('chipyard.TestHarness.SmallBoomConfig.top.v')        #smallboomconfig should be 475 modules 
-    # tree = ModuleTree(all_modules['ChipTop'], all_modules, all_module_instances)
+    # Simple ALUUnit example
+
+    # all_modules, all_module_instances = parse_file('alu.v')
+
+    # tree = ModuleTree(all_modules['ALUUnit'], all_modules, all_module_instances)
     # tree.setup_tree()
 
-    all_modules, all_module_instances = parse_file('alu.v')
+    # tree.rootInstance.mark_fault('/Root/alu/:slt')
+    # tree.rootInstance.mark_fault('/Root/alu/:_T_2')
+    # tree.inject_faults()
 
-    tree = ModuleTree(all_modules['ALUUnit'], all_modules, all_module_instances)
+    # tree.dump('output.v')
+
+
+    # BOOM example
+
+    all_modules, all_module_instances = parse_file('chipyard.TestHarness.SmallBoomConfig.top.v')        #smallboomconfig should be 475 modules 
+    tree = ModuleTree(all_modules['ChipTop'], all_modules, all_module_instances)
     tree.setup_tree()
 
-    tree.rootInstance.mark_fault('/Root/alu/:slt')
-    tree.rootInstance.mark_fault('/Root/alu/:_T_2')
-    tree.inject_faults()
 
+    tree.rootInstance.mark_fault('/Root/system/tile_prci_domain/tile_reset_domain/boom_tile/core/csr_exe_unit/alu/alu/:slt')
+    tree.rootInstance.mark_fault('/Root/system/tile_prci_domain/tile_reset_domain/boom_tile/core/mem_units_0/maddrcalc/:_io_resp_valid_T_1')
+    
+    
+
+    tree.inject_faults()
     tree.dump('output.v')
 
+
+
     print(tree)
-
-    # tree.setup_fault_paths(all_modules['ModC'], ['/Root/a_module_1/b_module_1/c_module_1', '/b_module_3/c_module_1', 'root/totally/invalidpath/toignore'], ['c_wire_1', 'invalidwire'])
-
-    # for ami in all_module_instances.keys():
-    #     for mi in all_module_instances[ami]:
-    #         if (len(mi._faulty_child_paths) != 0):
-    #             print("\n" + str(mi))
-    #             for path in mi._faulty_child_paths:
-    #                 print("\t{} routes to faulty module {}".format(mi.name, path))
-                
-    
-    """
-    from this, we know that the width of each fault input bus will be 1 (num faults), that Root 
-    will have 2 fault io sets and a_module_1, b_module_1, b_module_3 each have 1 fault io set. 
-    We know that the target instance modules will each have 1 fault io  set, so I didn't think 
-    it was necessary to add the logic here. I figure that we will likely add an additional step 
-    to Tree.setup_fault_paths at the end that goes through each provided path and uses 
-    Tree.get_node_from_path to get the actual target module instance and then apply whatever 
-    changes we want to it.
-    """
-
 

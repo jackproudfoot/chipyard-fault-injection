@@ -138,8 +138,9 @@ class Module:
                 exit(1)
 
             
-        print(f'\033[91mError: could not inject fault into wire {sample_wire}.\033[0m')
         
+        print(f'\033[91mError: could not inject fault into wire {sample_wire}.\033[0m')
+        exit(1)
         
     '''
     Parse inputs/outputs from the module

@@ -66,6 +66,7 @@ class ModuleInstance:
 
     '''
     Mark fault in instance of a module and track where the path back to root
+    Path format: /child1/child2/..../target:wire:bit
     '''
     def mark_fault(self, fault_path):
         # track fault path for fault i/o routing
@@ -95,6 +96,13 @@ class ModuleInstance:
             exit(1)
 
 
+    '''
+    Modifies the module_text to inject all the necessary logic for the fault injection
+    1. If it's the root module, add the fault_driver instance
+    2. If it's not the root module, add the fault_inputs and fault_outputs to the module i/o
+    3. For each faulty wire within this module, inject it by replacing original with faulty copy
+    4. For each faulty wire in the children, modify the children instance i/o to pass faulty i/o down
+    '''
     def inject_faults(self, root=False, fault_driver=None):
         # if no faulty wires or child modules don't do anything
         if len(self._faulty_child_paths) == 0:
@@ -103,28 +111,7 @@ class ModuleInstance:
         # make deepcopy of the module before changing the module text
         self.module = self.module.copy()
 
-        # determine the fault i/o bounds
-        fault_io_bounds = '' if len(self._faulty_child_paths) == 0 else f'[{len(self._faulty_child_paths) - 1}:0]'
-
-        if root:
-            # add fault driver module
-            module_header = re.findall(rf'module \w+\(.*?\);\n', self.module.module_text, re.DOTALL | re.MULTILINE)[0]
-
-            # create wires for all fault i/o and instantiate fault driver module in root
-            wires = f'\twire {fault_io_bounds} fault_inputs;\n\twire {fault_io_bounds} fault_outputs;\n'
-            driver_module = f'\t{fault_driver} fault_driver (\n\t\t.original_values(fault_outputs)\n\t\t.faulty_values(fault_inputs)\n)\n'
-
-            self.module.module_text = re.sub(rf'module \w+\(.*?\);\n', module_header + wires + driver_module, self.module.module_text, flags= re.DOTALL | re.MULTILINE)
         
-        else:
-            # modify the input/output of the module
-            module_declaration = re.findall(rf'module {self.module.type}\(\n', self.module.module_text)[0]
-
-            # add fault_inputs and fault_outputs to module i/o
-            mod_fault_input_wire = f'input\t\t{fault_io_bounds}\tfault_inputs,'
-            mod_fault_output_wire = f'output\t\t{fault_io_bounds}\tfault_outputs,'
-            self.module.module_text = re.sub(rf'module {self.module.type}\(\n', module_declaration + f'\t{mod_fault_input_wire}\n\t{mod_fault_output_wire}\n', self.module.module_text)
-
         # dict to track which faults are associated with which child modules 
         child_faults = {}
 
@@ -170,14 +157,40 @@ class ModuleInstance:
             fault_input_string = f'.fault_inputs({{{fault_input_params}}})'
             fault_output_string = f'.fault_outputs({{{fault_output_params}}})'
 
+            new_child_type = self.get_child_module_instance(child_name).module.type
             child_declaration = re.findall(rf'{child_name} \(.*?\n', self.module.module_text, re.MULTILINE)[0]
 
-            self.module.module_text = re.sub(rf'{child_name} \(.*?\n', child_declaration + f'\t\t{fault_input_string},\n\t\t{fault_output_string},\n', self.module.module_text)
+            self.module.module_text = re.sub(rf'\w+ {child_name} \(.*?\n', new_child_type + ' ' + child_declaration + f'\t\t{fault_input_string},\n\t\t{fault_output_string},\n', self.module.module_text)
 
 
         # update the type of the new faulty module with sha256 hash to ensure uniqueness
         digest = hashlib.sha256(self.module.module_text.encode()).hexdigest()
-        self.module.type = f'{self.module.type}_{digest}'
+        new_type = f'{self.module.type}_{digest}'
+
+        # determine the fault i/o bounds
+        fault_io_bounds = '' if len(self._faulty_child_paths) == 0 else f'[{len(self._faulty_child_paths) - 1}:0]'
+
+        if root:
+            # add fault driver module
+            module_header = re.findall(rf'module \w+\(.*?\);\n', self.module.module_text, re.DOTALL | re.MULTILINE)[0]
+
+            # create wires for all fault i/o and instantiate fault driver module in root
+            wires = f'\twire {fault_io_bounds} fault_inputs;\n\twire {fault_io_bounds} fault_outputs;\n'
+            driver_module = f'\t{fault_driver} fault_driver (\n\t\t.original_values(fault_outputs)\n\t\t.faulty_values(fault_inputs)\n)\n'
+
+            self.module.module_text = re.sub(rf'module \w+\(.*?\);\n', module_header + wires + driver_module, self.module.module_text, flags= re.DOTALL | re.MULTILINE)
+        
+        else:
+            # modify the input/output of the module
+            module_declaration = re.findall(rf'module {self.module.type}\(\n', self.module.module_text)[0]
+
+            # add fault_inputs and fault_outputs to module i/o
+            mod_fault_input_wire = f'input\t\t{fault_io_bounds}\tfault_inputs,'
+            mod_fault_output_wire = f'output\t\t{fault_io_bounds}\tfault_outputs,'
+            self.module.module_text = re.sub(rf'(module ){self.module.type}(\(\n)', rf'\1{new_type}\2' + f'\t{mod_fault_input_wire}\n\t{mod_fault_output_wire}\n', self.module.module_text)
+
+        self.module.type = new_type
+
             
 
     '''
