@@ -144,18 +144,30 @@ class ModuleInstance:
         for child_name, fault_indices in child_faults.items():
             
             # determine fault input params mapping
-            fault_input_params = ''
-            fault_output_params = ''
+            fault_input_string = ''
+            fault_output_string = ''
 
-            for fault_index in fault_indices:
-                fault_input_params += f'fault_inputs[{fault_index}], '
-                fault_output_params += f'fault_outputs[{fault_index}], '
+            if len(fault_indices) > 1:
+                fault_input_params = ''
+                fault_output_params = ''
 
-            fault_input_params = fault_input_params[:-2]
-            fault_output_params = fault_output_params[:-2]
+                for fault_index in fault_indices:
+                    fault_input_params += f'fault_inputs[{fault_index}], '
+                    fault_output_params += f'fault_outputs[{fault_index}], '
 
-            fault_input_string = f'.fault_inputs({{{fault_input_params}}})'
-            fault_output_string = f'.fault_outputs({{{fault_output_params}}})'
+                fault_input_params = fault_input_params[:-2]
+                fault_output_params = fault_output_params[:-2]
+
+                fault_input_string = f'.fault_inputs({{{fault_input_params}}})'
+                fault_output_string = f'.fault_outputs({{{fault_output_params}}})'
+
+            else:
+                fault_input_string = '.fault_inputs(fault_inputs)'
+                fault_output_string = '.fault_outputs(fault_outputs)'
+
+            
+
+            
 
             new_child_type = self.get_child_module_instance(child_name).module.type
             child_declaration = re.findall(rf'{child_name} \(.*?\n', self.module.module_text, re.MULTILINE)[0]

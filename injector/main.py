@@ -34,30 +34,30 @@ def parse_file(file_path):
 if __name__ == '__main__':
     # Simple ALUUnit example
 
-    # all_modules, all_module_instances = parse_file('alu.v')
+    all_modules, all_module_instances = parse_file('alu.v')
 
-    # tree = ModuleTree(all_modules['ALUUnit'], all_modules, all_module_instances)
-    # tree.setup_tree()
+    tree = ModuleTree(all_modules['ALUUnit'], all_modules, all_module_instances)
+    tree.setup_tree()
 
-    # tree.rootInstance.mark_fault('/Root/alu/:slt')
-    # tree.rootInstance.mark_fault('/Root/alu/:_T_2')
-    # tree.inject_faults()
+    tree.rootInstance.mark_fault('/Root/alu/:slt')
+    #tree.rootInstance.mark_fault('/Root/alu/:_T_2')
+    tree.inject_faults()
 
-    # tree.dump('output.v')
+    tree.dump('output.v')
 
 
     # BOOM example
 
-    all_modules, all_module_instances = parse_file('chipyard.TestHarness.SmallBoomConfig.top.v')        #smallboomconfig should be 475 modules 
-    tree = ModuleTree(all_modules['ChipTop'], all_modules, all_module_instances)
-    tree.setup_tree()
+    # all_modules, all_module_instances = parse_file('chipyard.TestHarness.SmallBoomConfig.top.v')        #smallboomconfig should be 475 modules 
+    # tree = ModuleTree(all_modules['ChipTop'], all_modules, all_module_instances)
+    # tree.setup_tree()
 
 
-    tree.rootInstance.mark_fault('/Root/system/tile_prci_domain/tile_reset_domain/boom_tile/core/csr_exe_unit/alu/alu/:slt')
-    tree.rootInstance.mark_fault('/Root/system/tile_prci_domain/tile_reset_domain/boom_tile/core/mem_units_0/maddrcalc/:_io_resp_valid_T_1')
+    # tree.rootInstance.mark_fault('/Root/system/tile_prci_domain/tile_reset_domain/boom_tile/core/csr_exe_unit/alu/alu/:slt')
+    # tree.rootInstance.mark_fault('/Root/system/tile_prci_domain/tile_reset_domain/boom_tile/core/mem_units_0/maddrcalc/:_io_resp_valid_T_1')
     
-    tree.inject_faults()
-    tree.dump('output.v')
+    # tree.inject_faults()
+    # tree.dump('output.v')
 
 
 
