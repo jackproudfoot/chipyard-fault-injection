@@ -1,10 +1,6 @@
+// ALU.v
+
 module alu(data_operandA, data_operandB, ctrl_ALUopcode, ctrl_shiftamt, data_result, isNotEqual, isLessThan, overflow);
-	wire  fault_inputs;
-	wire  fault_outputs;
-	FaultDriver fault_driver (
-		.original_values(fault_outputs),
-		.faulty_values(fault_inputs)
-);
         
     input [31:0] data_operandA, data_operandB;
     input [4:0] ctrl_ALUopcode, ctrl_shiftamt;
@@ -59,9 +55,7 @@ module alu(data_operandA, data_operandB, ctrl_ALUopcode, ctrl_shiftamt, data_res
     // Shift arithmetic right
     wire [31:0] sra;
 
-    arithmetic_right_shift_7b81b5cded015d86c734dd7c65020106dc467e022eaf49f4d1cd74a31fd4bb0d shift_ar (
-		.fault_inputs(fault_inputs),
-		.fault_outputs(fault_outputs),
+    arithmetic_right_shift shift_ar (
         .Out(sra), 
         .A(data_operandA), 
         .shamt(ctrl_shiftamt)
@@ -76,74 +70,7 @@ module alu(data_operandA, data_operandB, ctrl_ALUopcode, ctrl_shiftamt, data_res
 
     mux_8 opcode_selector(data_result, ctrl_ALUopcode[2:0], s, s, g, p, sll, sra, s, s);
 endmodule
-module FaultDriver (
-  input original_values,
-  output faulty_values
-);
 
-  // fault injection from /Root/shift_ar/one/:temp:7
-  assign faulty_values = 0;
-endmodule
-module mux_8(out, select, in0, in1, in2, in3, in4, in5, in6, in7);
-    input [2:0] select;
-    input [31:0] in0, in1, in2, in3, in4, in5, in6, in7;
-    output [31:0] out;
-    wire [31:0] w1, w2;
-
-    mux_4 first_top(w1, select[1:0], in0, in1, in2, in3);
-    mux_4 first_bottom(w2, select[1:0], in4, in5, in6, in7);
-    mux_2 second(out, select[2], w1, w2);
-endmodule
-module mux_2(out, select, in0, in1);
-    input select;
-    input [31:0] in0, in1;
-    output [31:0] out;
-    assign out = select ? in1 : in0;
-endmodule
-module mux_4(out, select, in0, in1, in2, in3);
-    input [1:0] select;
-    input [31:0] in0, in1, in2, in3;
-    output [31:0] out;
-    wire [31:0] w1, w2;
-    mux_2 first_top(w1, select[0], in0, in1);
-    mux_2 first_bottom(w2, select[0], in2, in3);
-    mux_2 second(out, select[1], w1, w2);
-endmodule
-module equal_checker(Out, S);
-
-    input [31:0] S;
-
-    output Out;
-
-    wire w1, w2, w3, w4;
-
-    or g1(w1, S[31], S[30], S[29], S[28], S[27], S[26], S[25], S[24]);
-    or g2(w2, S[23], S[22], S[21], S[20], S[19], S[18], S[17], S[16]);
-    or g3(w3, S[15], S[14], S[13], S[12], S[11], S[10], S[9], S[8]);
-    or g4(w4, S[7], S[6], S[5], S[4], S[3], S[2], S[1], S[0]);
-    or eq(Out, w1, w2, w3, w4);
-
-endmodule
-module less_than_checker(Out, A, B, S);
-    input A, B, S;
-
-    output Out;
-
-    wire not_a, not_b, not_s;
-    not a_inv(not_a, A);
-    not b_inv(not_b, B);
-    not s_inv(not_s, S);
-
-
-    wire c0, c1, c2;
-    and case0(c0, not_a, not_b, S);
-    and case1(c1, A, B, S);
-    and case2(c2, A, not_b);
-
-    or lt(Out, c0, c1, c2);
-
-
-endmodule
 module overflow_checker(Out, A, B, S, sub);
     input A, B, S, sub;
 
@@ -168,171 +95,50 @@ module overflow_checker(Out, A, B, S, sub);
 
     assign Out = sub ? s_o : a_o;
 endmodule
-module arithmetic_right_shift_7b81b5cded015d86c734dd7c65020106dc467e022eaf49f4d1cd74a31fd4bb0d(
-	input			fault_inputs,
-	output			fault_outputs,
-    output [31:0] Out, 
-    input [31:0] A, 
-    input [4:0] shamt
-);
+
+module less_than_checker(Out, A, B, S);
+    input A, B, S;
+
+    output Out;
+
+    wire not_a, not_b, not_s;
+    not a_inv(not_a, A);
+    not b_inv(not_b, B);
+    not s_inv(not_s, S);
 
 
-    wire [31:0] s16, s8, s4, s2, s1, stage1, stage2, stage3, stage4;
+    wire c0, c1, c2;
+    and case0(c0, not_a, not_b, S);
+    and case1(c1, A, B, S);
+    and case2(c2, A, not_b);
 
-    right_arith_shift_sixteen sixteen(s16, A);
-    right_arith_shift_eight eight(s8, stage1);
-    right_arith_shift_four four(s4, stage2);
-    right_arith_shift_two two(s2, stage3);
-    right_arith_shift_one_4f3ed216c739cf05de1edc4d0a2489d95733fb3a7f4cec2427458343dc623c6a one (
-		.fault_inputs(fault_inputs),
-		.fault_outputs(fault_outputs),
-        .Out(s1), 
-        .A(stage4)
-    );
+    or lt(Out, c0, c1, c2);
 
-    mux_2 sel_16(stage1, shamt[4], A, s16);
-    mux_2 sel_8(stage2, shamt[3], stage1, s8);
-    mux_2 sel_4(stage3, shamt[2], stage2, s4);
-    mux_2 sel_2(stage4, shamt[1], stage3, s2);
-    mux_2 sel_1(Out, shamt[0], stage4, s1);
+
 endmodule
-module right_arith_shift_one_4f3ed216c739cf05de1edc4d0a2489d95733fb3a7f4cec2427458343dc623c6a(
-	input			fault_inputs,
-	output			fault_outputs,
-    output [31:0] Out, 
-    input [31:0] A
-);
-    wire [30:0] temp_original = A[31:1];
 
-    wire temp_faultybit = fault_inputs;
-    wire [30:0] temp = {temp_original[30:7], temp_faultybit, temp_original[6:0]}; // fault injection 
-    assign fault_outputs = temp_original[7]; // direct original value to output 
-    
+module equal_checker(Out, S);
 
-    assign Out = {A[31], temp[30:0]};
+    input [31:0] S;
+
+    output Out;
+
+    wire w1, w2, w3, w4;
+
+    or g1(w1, S[31], S[30], S[29], S[28], S[27], S[26], S[25], S[24]);
+    or g2(w2, S[23], S[22], S[21], S[20], S[19], S[18], S[17], S[16]);
+    or g3(w3, S[15], S[14], S[13], S[12], S[11], S[10], S[9], S[8]);
+    or g4(w4, S[7], S[6], S[5], S[4], S[3], S[2], S[1], S[0]);
+    or eq(Out, w1, w2, w3, w4);
+
 endmodule
-module right_arith_shift_two(Out, A);
-    input [31:0] A;
 
-    output [31:0] Out;
 
-    assign Out[29:0] = A[31:2];
+// adder.v
 
-    assign Out[31] = A[31];
-    assign Out[30] = A[31];
-endmodule
-module right_arith_shift_four(Out, A);
-    input [31:0] A;
-
-    output [31:0] Out;
-
-    assign Out[27:0] = A[31:4];
-
-    assign Out[31] = A[31];
-    assign Out[30] = A[31];
-    assign Out[29] = A[31];
-    assign Out[28] = A[31];
-endmodule
-module right_arith_shift_eight(Out, A);
-    input [31:0] A;
-
-    output [31:0] Out;
-
-    assign Out[23:0] = A[31:8];
-
-    assign Out[31] = A[31];
-    assign Out[30] = A[31];
-    assign Out[29] = A[31];
-    assign Out[28] = A[31];
-    assign Out[27] = A[31];
-    assign Out[26] = A[31];
-    assign Out[25] = A[31];
-    assign Out[24] = A[31];
-endmodule
-module right_arith_shift_sixteen(Out, A);
-    input [31:0] A;
-
-    output [31:0] Out;
-
-    assign Out[15:0] = A[31:16];
-
-    assign Out[31] = A[31];
-    assign Out[30] = A[31];
-    assign Out[29] = A[31];
-    assign Out[28] = A[31];
-    assign Out[27] = A[31];
-    assign Out[26] = A[31];
-    assign Out[25] = A[31];
-    assign Out[24] = A[31];
-    assign Out[23] = A[31];
-    assign Out[22] = A[31];
-    assign Out[21] = A[31];
-    assign Out[20] = A[31];
-    assign Out[19] = A[31];
-    assign Out[18] = A[31];
-    assign Out[17] = A[31];
-    assign Out[16] = A[31];
-endmodule
-module logical_left_shift(Out, A, shamt);
-    input [31:0] A;
-    input [4:0] shamt;
-    
-    output [31:0] Out;
-
-    wire [31:0] s16, s8, s4, s2, s1, stage1, stage2, stage3, stage4;
-
-    left_shift_sixteen sixteen(s16, A);
-    left_shift_eight eight(s8, stage1);
-    left_shift_four four(s4, stage2);
-    left_shift_two two(s2, stage3);
-    left_shift_one one(s1, stage4);
-
-    mux_2 sel_16(stage1, shamt[4], A, s16);
-    mux_2 sel_8(stage2, shamt[3], stage1, s8);
-    mux_2 sel_4(stage3, shamt[2], stage2, s4);
-    mux_2 sel_2(stage4, shamt[1], stage3, s2);
-    mux_2 sel_1(Out, shamt[0], stage4, s1);
-endmodule
-module left_shift_one(Out, A);
-    input [31:0] A;
-
-    output [31:0] Out;
-
-    assign Out[31:1] = A[30:0];
-    assign Out[0] = 1'b0;
-endmodule
-module left_shift_two(Out, A);
-    input [31:0] A;
-
-    output [31:0] Out;
-
-    assign Out[31:2] = A[29:0];
-    assign Out[1:0] = 2'b0;
-endmodule
-module left_shift_four(Out, A);
-    input [31:0] A;
-
-    output [31:0] Out;
-
-    assign Out[31:4] = A[27:0];
-    assign Out[3:0] = 4'b0;
-endmodule
-module left_shift_eight(Out, A);
-    input [31:0] A;
-
-    output [31:0] Out;
-
-    assign Out[31:8] = A[23:0];
-    assign Out[7:0] = 8'b0;
-endmodule
-module left_shift_sixteen(Out, A);
-    input [31:0] A;
-
-    output [31:0] Out;
-
-    assign Out[31:16] = A[15:0];
-    assign Out[15:0] = 16'b0;
-endmodule
+/*
+ * 32 bit bit carry select adder
+ */
 module adder(
     input [31:0] A, 
     input [31:0] B, 
@@ -428,6 +234,10 @@ module adder(
 
 
 endmodule
+
+/*
+ *  Eight bit carry look ahead adder block
+ */
 module carry_look_ahead_block(A, B, Cin, p, g, S, P, G);
     
     input [7:0] A, B, p, g;
@@ -519,4 +329,251 @@ module carry_look_ahead_block(A, B, Cin, p, g, S, P, G);
     and prop(P, p[7], p[6], p[5], p[4], p[3], p[2], p[1], p[0]);
     or  gen(G, g[7], c8w1, c8w2, c8w3, c8w4, c8w5, c8w6, c8w7);
 
+endmodule
+
+
+// arith_right_shift.v
+
+/*
+* 32 bit arithmetic right shifter
+*/
+module arithmetic_right_shift(
+    output [31:0] Out, 
+    input [31:0] A, 
+    input [4:0] shamt
+);
+
+
+    wire [31:0] s16, s8, s4, s2, s1, stage1, stage2, stage3, stage4;
+
+    right_arith_shift_sixteen sixteen(s16, A);
+    right_arith_shift_eight eight(s8, stage1);
+    right_arith_shift_four four(s4, stage2);
+    right_arith_shift_two two(s2, stage3);
+    right_arith_shift_one one (
+        .Out(s1), 
+        .A(stage4)
+    );
+
+    mux_2 sel_16(stage1, shamt[4], A, s16);
+    mux_2 sel_8(stage2, shamt[3], stage1, s8);
+    mux_2 sel_4(stage3, shamt[2], stage2, s4);
+    mux_2 sel_2(stage4, shamt[1], stage3, s2);
+    mux_2 sel_1(Out, shamt[0], stage4, s1);
+endmodule
+
+/*
+* Right shift by 1 module
+*/
+module right_arith_shift_one(
+    output [31:0] Out, 
+    input [31:0] A
+);
+    wire [30:0] temp = A[31:1];
+
+    assign Out = {A[31], temp[30:0]};
+endmodule
+
+/*
+* Right shift by 2 module
+*/
+module right_arith_shift_two(Out, A);
+    input [31:0] A;
+
+    output [31:0] Out;
+
+    assign Out[29:0] = A[31:2];
+
+    assign Out[31] = A[31];
+    assign Out[30] = A[31];
+endmodule
+
+/*
+* Right shift by 4 module
+*/
+module right_arith_shift_four(Out, A);
+    input [31:0] A;
+
+    output [31:0] Out;
+
+    assign Out[27:0] = A[31:4];
+
+    assign Out[31] = A[31];
+    assign Out[30] = A[31];
+    assign Out[29] = A[31];
+    assign Out[28] = A[31];
+endmodule
+
+/*
+* Right shift by 8 module
+*/
+module right_arith_shift_eight(Out, A);
+    input [31:0] A;
+
+    output [31:0] Out;
+
+    assign Out[23:0] = A[31:8];
+
+    assign Out[31] = A[31];
+    assign Out[30] = A[31];
+    assign Out[29] = A[31];
+    assign Out[28] = A[31];
+    assign Out[27] = A[31];
+    assign Out[26] = A[31];
+    assign Out[25] = A[31];
+    assign Out[24] = A[31];
+endmodule
+
+/*
+* Right shift by 16 module
+*/
+module right_arith_shift_sixteen(Out, A);
+    input [31:0] A;
+
+    output [31:0] Out;
+
+    assign Out[15:0] = A[31:16];
+
+    assign Out[31] = A[31];
+    assign Out[30] = A[31];
+    assign Out[29] = A[31];
+    assign Out[28] = A[31];
+    assign Out[27] = A[31];
+    assign Out[26] = A[31];
+    assign Out[25] = A[31];
+    assign Out[24] = A[31];
+    assign Out[23] = A[31];
+    assign Out[22] = A[31];
+    assign Out[21] = A[31];
+    assign Out[20] = A[31];
+    assign Out[19] = A[31];
+    assign Out[18] = A[31];
+    assign Out[17] = A[31];
+    assign Out[16] = A[31];
+endmodule
+
+
+// log_left_shift.v
+
+/*
+* 32 bit logical left shifter
+*/
+module logical_left_shift(Out, A, shamt);
+    input [31:0] A;
+    input [4:0] shamt;
+    
+    output [31:0] Out;
+
+    wire [31:0] s16, s8, s4, s2, s1, stage1, stage2, stage3, stage4;
+
+    left_shift_sixteen sixteen(s16, A);
+    left_shift_eight eight(s8, stage1);
+    left_shift_four four(s4, stage2);
+    left_shift_two two(s2, stage3);
+    left_shift_one one(s1, stage4);
+
+    mux_2 sel_16(stage1, shamt[4], A, s16);
+    mux_2 sel_8(stage2, shamt[3], stage1, s8);
+    mux_2 sel_4(stage3, shamt[2], stage2, s4);
+    mux_2 sel_2(stage4, shamt[1], stage3, s2);
+    mux_2 sel_1(Out, shamt[0], stage4, s1);
+endmodule
+
+/*
+* Left shift by 1 module
+*/
+module left_shift_one(Out, A);
+    input [31:0] A;
+
+    output [31:0] Out;
+
+    assign Out[31:1] = A[30:0];
+    assign Out[0] = 1'b0;
+endmodule
+
+/*
+* Left shift by 2 module
+*/
+module left_shift_two(Out, A);
+    input [31:0] A;
+
+    output [31:0] Out;
+
+    assign Out[31:2] = A[29:0];
+    assign Out[1:0] = 2'b0;
+endmodule
+
+/*
+* Left shift by 4 module
+*/
+module left_shift_four(Out, A);
+    input [31:0] A;
+
+    output [31:0] Out;
+
+    assign Out[31:4] = A[27:0];
+    assign Out[3:0] = 4'b0;
+endmodule
+
+/*
+* Left shift by 8 module
+*/
+module left_shift_eight(Out, A);
+    input [31:0] A;
+
+    output [31:0] Out;
+
+    assign Out[31:8] = A[23:0];
+    assign Out[7:0] = 8'b0;
+endmodule
+
+/*
+* Left shift by 16 module
+*/
+module left_shift_sixteen(Out, A);
+    input [31:0] A;
+
+    output [31:0] Out;
+
+    assign Out[31:16] = A[15:0];
+    assign Out[15:0] = 16'b0;
+endmodule
+
+// mux.v
+
+/*
+* 2 input mux
+*/
+module mux_2(out, select, in0, in1);
+    input select;
+    input [31:0] in0, in1;
+    output [31:0] out;
+    assign out = select ? in1 : in0;
+endmodule
+
+/*
+* 4 input mux
+*/
+module mux_4(out, select, in0, in1, in2, in3);
+    input [1:0] select;
+    input [31:0] in0, in1, in2, in3;
+    output [31:0] out;
+    wire [31:0] w1, w2;
+    mux_2 first_top(w1, select[0], in0, in1);
+    mux_2 first_bottom(w2, select[0], in2, in3);
+    mux_2 second(out, select[1], w1, w2);
+endmodule
+
+/*
+* 8 input mux
+*/
+module mux_8(out, select, in0, in1, in2, in3, in4, in5, in6, in7);
+    input [2:0] select;
+    input [31:0] in0, in1, in2, in3, in4, in5, in6, in7;
+    output [31:0] out;
+    wire [31:0] w1, w2;
+
+    mux_4 first_top(w1, select[1:0], in0, in1, in2, in3);
+    mux_4 first_bottom(w2, select[1:0], in4, in5, in6, in7);
+    mux_2 second(out, select[2], w1, w2);
 endmodule

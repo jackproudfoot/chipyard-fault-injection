@@ -143,6 +143,8 @@ class ModuleInstance:
         # iterate over children on fault path and modify their module i/o
         for child_name, fault_indices in child_faults.items():
             
+            print(child_name, fault_indices)
+
             # determine fault input params mapping
             fault_input_string = ''
             fault_output_string = ''
@@ -167,6 +169,8 @@ class ModuleInstance:
 
             
 
+            print(child_name)
+
             new_child_type = self.get_child_module_instance(child_name).module.type
             child_declaration = re.findall(rf'{child_name} \(.*?\n', self.module.module_text, re.MULTILINE)[0]
 
@@ -186,7 +190,7 @@ class ModuleInstance:
 
             # create wires for all fault i/o and instantiate fault driver module in root
             wires = f'\twire {fault_io_bounds} fault_inputs;\n\twire {fault_io_bounds} fault_outputs;\n'
-            driver_module = f'\t{fault_driver} fault_driver (\n\t\t.original_values(fault_outputs)\n\t\t.faulty_values(fault_inputs)\n)\n'
+            driver_module = f'\t{fault_driver} fault_driver (\n\t\t.original_values(fault_outputs),\n\t\t.faulty_values(fault_inputs)\n);\n'
 
             self.module.module_text = re.sub(rf'module \w+\(.*?\);\n', module_header + wires + driver_module, self.module.module_text, flags= re.DOTALL | re.MULTILINE)
         

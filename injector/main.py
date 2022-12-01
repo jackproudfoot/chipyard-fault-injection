@@ -34,16 +34,29 @@ def parse_file(file_path):
 if __name__ == '__main__':
     # Simple ALUUnit example
 
-    all_modules, all_module_instances = parse_file('alu.v')
+    all_modules, all_module_instances = parse_file('alu350.v')
 
-    tree = ModuleTree(all_modules['ALUUnit'], all_modules, all_module_instances)
+    tree = ModuleTree(all_modules['alu'], all_modules, all_module_instances)
     tree.setup_tree()
 
-    tree.rootInstance.mark_fault('/Root/alu/:slt')
-    #tree.rootInstance.mark_fault('/Root/alu/:_T_2')
+    tree.rootInstance.mark_fault('/Root/shift_ar/one/:temp:7')
     tree.inject_faults()
 
     tree.dump('output.v')
+
+    
+    # # Simple ALUUnit example
+
+    # all_modules, all_module_instances = parse_file('alu.v')
+
+    # tree = ModuleTree(all_modules['ALUUnit'], all_modules, all_module_instances)
+    # tree.setup_tree()
+
+    # tree.rootInstance.mark_fault('/Root/alu/:slt')
+    # tree.rootInstance.mark_fault('/Root/alu/:_T_2')
+    # tree.inject_faults()
+
+    # tree.dump('output.v')
 
 
     # BOOM example

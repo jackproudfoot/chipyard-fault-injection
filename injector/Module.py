@@ -67,7 +67,7 @@ class Module:
             bounds_string = groups[0][1].strip()
             if (bounds_string != ''):
                 bounds = bounds_string[1:-1].split(':')
-                faulty_index = bus_index if bus_index != None else random.randrange(int(bounds[1]), int(bounds[0]))
+                faulty_index = int(bus_index) if bus_index != None else random.randrange(int(bounds[1]), int(bounds[0]))
 
                 # determine concatination pattern for injecting faulty bit based on indices
                 bus_concatination = ''
